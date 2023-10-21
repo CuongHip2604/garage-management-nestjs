@@ -1,0 +1,5 @@
+export enum GARAGE_STATUS {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  ASSIGNED = 'ASSIGNED',
+}
