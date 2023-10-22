@@ -39,11 +39,11 @@ export class AuthService {
         throw new BadRequestException('Your account is inactivated');
       }
 
-      // const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await bcrypt.compare(password, user.password);
 
-      // if (!isValidPassword) {
-      //   throw new BadRequestException('Invalid credentials');
-      // }
+      if (!isValidPassword) {
+        throw new BadRequestException('Invalid credentials');
+      }
 
       return await this.generateJwt(user);
     } catch (error) {
