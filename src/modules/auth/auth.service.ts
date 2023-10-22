@@ -47,7 +47,7 @@ export class AuthService {
 
       return await this.generateJwt(user);
     } catch (error) {
-      console.log(error);
+      console.log('error', error);
     }
   }
 
@@ -155,21 +155,25 @@ export class AuthService {
   }
 
   async generateJwt(user: User) {
-    const payload = {
-      id: user.id,
-      email: user.email,
-      fullName: user.fullName,
-      role: user.role,
-    };
+    try {
+      const payload = {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+      };
 
-    const accessToken = await this.jwtService.signAsync(payload, {
-      secret: 'secret',
-      expiresIn: '36000s',
-    });
+      const accessToken = await this.jwtService.signAsync(payload, {
+        secret: 'secret',
+        expiresIn: '36000s',
+      });
 
-    delete user.password;
+      delete user.password;
 
-    return { accessToken, user };
+      return { accessToken, user };
+    } catch (error) {
+      console.log('error', error);
+    }
   }
 
   async encodeToken(payload: Record<string, any>) {
