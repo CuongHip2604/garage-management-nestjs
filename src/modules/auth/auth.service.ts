@@ -24,27 +24,31 @@ export class AuthService {
   async signIn(body: SignInDto) {
     const { email, password } = body;
 
-    const user = await this.userRepository.findOne({
-      where: {
-        email,
-      },
-    });
+    try {
+      const user = await this.userRepository.findOne({
+        where: {
+          email,
+        },
+      });
 
-    if (!user) {
-      throw new BadRequestException('Invalid credentials');
+      if (!user) {
+        throw new BadRequestException('Invalid credentials');
+      }
+
+      if (user.status === USER_STATUS.INACTIVE) {
+        throw new BadRequestException('Your account is inactivated');
+      }
+
+      const isValidPassword = await bcrypt.compare(password, user.password);
+
+      if (!isValidPassword) {
+        throw new BadRequestException('Invalid credentials');
+      }
+
+      return await this.generateJwt(user);
+    } catch (error) {
+      console.log(error);
     }
-
-    if (user.status === USER_STATUS.INACTIVE) {
-      throw new BadRequestException('Your account is inactivated');
-    }
-
-    const isValidPassword = await bcrypt.compare(password, user.password);
-
-    if (!isValidPassword) {
-      throw new BadRequestException('Invalid credentials');
-    }
-
-    return await this.generateJwt(user);
   }
 
   async forgotPassword(body: ForgotPasswordDto) {
