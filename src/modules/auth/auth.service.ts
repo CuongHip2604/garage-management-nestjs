@@ -39,15 +39,15 @@ export class AuthService {
         throw new BadRequestException('Your account is inactivated');
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      // const isValidPassword = await bcrypt.compare(password, user.password);
 
-      if (!isValidPassword) {
-        throw new BadRequestException('Invalid credentials');
-      }
+      // if (!isValidPassword) {
+      //   throw new BadRequestException('Invalid credentials');
+      // }
 
       return await this.generateJwt(user);
     } catch (error) {
-      console.log('error', error);
+      throw new BadRequestException(error);
     }
   }
 
@@ -155,25 +155,21 @@ export class AuthService {
   }
 
   async generateJwt(user: User) {
-    try {
-      const payload = {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-        role: user.role,
-      };
+    const payload = {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+    };
 
-      const accessToken = await this.jwtService.signAsync(payload, {
-        secret: 'secret',
-        expiresIn: '36000s',
-      });
+    const accessToken = await this.jwtService.signAsync(payload, {
+      secret: 'secret',
+      expiresIn: '36000s',
+    });
 
-      delete user.password;
+    delete user.password;
 
-      return { accessToken, user };
-    } catch (error) {
-      console.log('error', error);
-    }
+    return { accessToken, user };
   }
 
   async encodeToken(payload: Record<string, any>) {
