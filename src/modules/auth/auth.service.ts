@@ -39,6 +39,8 @@ export class AuthService {
         throw new BadRequestException('Your account is inactivated');
       }
 
+      console.log('password', password, user.password);
+
       const isValidPassword = await compare(password, user.password);
 
       console.log('isValidPassword', isValidPassword);
