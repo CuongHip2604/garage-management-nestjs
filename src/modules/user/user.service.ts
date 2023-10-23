@@ -3,7 +3,6 @@ import {
   BadRequestException,
   Injectable,
 } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 import { omit } from 'lodash';
 import { GARAGE_STATUS } from 'src/enums/garage';
 import { In, ILike } from 'typeorm';
@@ -13,6 +12,7 @@ import { MailService } from '../mail/mail.service';
 import { CreateUserDto, UpdateUserDto, UserQueryDto } from './user.dto';
 import { UserRepository } from './user.repository';
 import { UpdateProfileDto } from '../auth/auth.dto';
+import { genSalt, hash } from 'bcryptjs';
 
 @Injectable()
 export class UserService {
@@ -107,8 +107,8 @@ export class UserService {
       throw new BadGatewayException('Garages is invalid');
     }
 
-    const salt = bcrypt.genSaltSync();
-    const hasPassword = bcrypt.hashSync(password, salt);
+    const salt = await genSalt();
+    const hasPassword = await hash(password, salt);
 
     await this.userRepository.save({
       email,

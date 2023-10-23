@@ -1,4 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { compare, genSalt, hash } from 'bcryptjs';
+import { USER_STATUS } from 'src/enums/user';
+import { User } from '../user/user.entity';
+import { UserRepository } from '../user/user.repository';
+import { UserService } from '../user/user.service';
 import {
   ChangePasswordDto,
   ForgotPasswordDto,
@@ -6,12 +12,6 @@ import {
   SignInDto,
   UpdateProfileDto,
 } from './auth.dto';
-import { UserRepository } from '../user/user.repository';
-import * as bcrypt from 'bcrypt';
-import { User } from '../user/user.entity';
-import { USER_STATUS } from 'src/enums/user';
-import { JwtService } from '@nestjs/jwt';
-import { UserService } from '../user/user.service';
 
 @Injectable()
 export class AuthService {
@@ -39,7 +39,7 @@ export class AuthService {
         throw new BadRequestException('Your account is inactivated');
       }
 
-      const isValidPassword = await bcrypt.compare(password, user.password);
+      const isValidPassword = await compare(password, user.password);
 
       console.log('isValidPassword', isValidPassword);
 
@@ -102,8 +102,8 @@ export class AuthService {
       throw new BadRequestException('Token is invalid');
     }
 
-    const salt = bcrypt.genSaltSync();
-    const hasPassword = bcrypt.hashSync(password, salt);
+    const salt = await genSalt();
+    const hasPassword = await hash(password, salt);
 
     await this.userRepository.update(
       { id: user.id },
@@ -131,14 +131,14 @@ export class AuthService {
       throw new BadRequestException('The user does not found');
     }
 
-    const isValidPassword = await bcrypt.compare(password, user.password);
+    const isValidPassword = await compare(password, user.password);
 
     if (!isValidPassword) {
       throw new BadRequestException('Invalid credentials');
     }
 
-    const salt = bcrypt.genSaltSync();
-    const hasPassword = bcrypt.hashSync(newPassword, salt);
+    const salt = await genSalt();
+    const hasPassword = await hash(newPassword, salt);
 
     await this.userRepository.update(
       { id: user.id },
