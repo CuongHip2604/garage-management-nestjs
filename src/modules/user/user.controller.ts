@@ -15,10 +15,14 @@ import { JwtAuthGuard } from 'src/guard/jwt.guard';
 import { CreateUserDto, UpdateUserDto, UserQueryDto } from './user.dto';
 import { UserService } from './user.service';
 import { UserReq } from 'src/decorator/user.decorator';
+import { RoleGuard } from 'src/guard/role.guard';
+import { Role } from 'src/decorator/role.decorator';
+import { USER_ROLE } from 'src/enums/user';
 
+@Role(USER_ROLE.ADMIN)
 @ApiTags('User')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RoleGuard)
 @Controller('users')
 export class UserController {
   constructor(private readonly userService: UserService) {}

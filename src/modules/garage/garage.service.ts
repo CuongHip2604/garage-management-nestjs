@@ -3,11 +3,13 @@ import {
   BadRequestException,
   Injectable,
 } from '@nestjs/common';
-import { In, ILike } from 'typeorm';
+import { GARAGE_STATUS } from 'src/enums/garage';
+import { USER_ROLE } from 'src/enums/user';
+import { ILike, In } from 'typeorm';
 import { ServiceRepository } from '../service/service.repository';
 import { CreateGarageDto, GarageQueryDto, UpdateGarageDto } from './garage.dto';
 import { GarageRepository } from './garage.repository';
-import { GARAGE_STATUS } from 'src/enums/garage';
+import { User } from '../user/user.entity';
 
 @Injectable()
 export class GarageService {
@@ -16,8 +18,9 @@ export class GarageService {
     private readonly serviceRepository: ServiceRepository,
   ) {}
 
-  async findGarages(query: GarageQueryDto) {
+  async findGarages(query: GarageQueryDto, user: User) {
     const { email, name, status, phone } = query;
+    const { role, id } = user;
 
     const page = +query.page || 1;
     const limit = +query.limit || 10;
@@ -25,9 +28,16 @@ export class GarageService {
     const offset = (page - 1) * limit;
 
     const queryBuilder = this.garageRepository
-      .createQueryBuilder()
+      .createQueryBuilder('garage')
       .take(limit)
       .skip(offset);
+
+    if (role === USER_ROLE.USER) {
+      queryBuilder
+        .innerJoin('garage.user', 'user')
+        .andWhere('user.role = :role', { role })
+        .andWhere('user.id = :id', { id });
+    }
 
     if (name) {
       queryBuilder.andWhere({ fullName: ILike(`%${name}%`) });
@@ -55,9 +65,14 @@ export class GarageService {
     };
   }
 
-  async findGarage(id: string) {
+  async findGarage(id: string, user?: User) {
     const garage = await this.garageRepository.findOne({
-      where: { id },
+      where: {
+        id,
+        user: {
+          id: user?.role === USER_ROLE.USER ? user.id : null,
+        },
+      },
       relations: {
         services: true,
         user: true,
@@ -150,8 +165,8 @@ export class GarageService {
     return 'Create garage is successful';
   }
 
-  async updateGarage(id: string, body: UpdateGarageDto) {
-    const existingGarage = await this.findGarage(id);
+  async updateGarage(id: string, body: UpdateGarageDto, user: User) {
+    const existingGarage = await this.findGarage(id, user);
 
     Object.assign(existingGarage, body);
 
@@ -160,8 +175,8 @@ export class GarageService {
     return 'Update garage is successful';
   }
 
-  async deleteGarage(id: string) {
-    const garage = await this.findGarage(id);
+  async deleteGarage(id: string, user: User) {
+    const garage = await this.findGarage(id, user);
 
     if (garage.user || garage.services.length) {
       throw new BadRequestException(
